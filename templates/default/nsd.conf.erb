@@ -1,0 +1,43 @@
+server:
+  <% @server_options.each do |k, v| %>
+  <%= k %>: <%= v %>
+  <% end %>
+
+remote-control:
+  control-enable: yes
+
+<% if @remote_controls.is_a?(Array) %>
+<% @remote_controls.each do |r| %>
+remote-control:
+  <% r.each do |k, v| %>
+  <%= k %>: <%= v %>
+  <% end %>
+<% end %>
+<% end %>
+
+<% if @patterns.is_a?(Array) %>
+<% @patterns.each do |r| %>
+pattern:
+  <% r.each do |k, v| %>
+  <%= k %>: <%= v %>
+  <% end %>
+<% end %>
+<% end %>
+
+<% if @keys.is_a?(Array) %>
+<% @keys.each do |r| %>
+key:
+  <% r.each do |k, v| %>
+  <%= k %>: <%= v %>
+  <% end %>
+<% end %>
+<% end %>
+
+<% if @zones.is_a?(Array) %>
+<% @zones.each do |r| %>
+zone:
+  <% r.each do |k, v| %>
+  <%= k %>: <%= v %>
+  <% end %>
+<% end %>
+<% end %>
