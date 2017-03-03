@@ -2,6 +2,8 @@ class Chef
   class Provider
     class Nsd < Chef::Provider
       include RndcKeysHelper
+      include Chef::Mixin::Which
+      include Chef::Mixin::ShellOut
 
       provides :nsd, os: "linux"
 
@@ -15,42 +17,62 @@ class Chef
           create_release_path
 
           current_revision = git_provider.find_current_revision
+
           Chef::Log.info("Current git revision: #{current_revision}")
 
           git_repo.run_action(:sync)
-          nsd_config.run_action(:create)
-          nsd_service(:start)
+          deployed_revision = git_provider.find_current_revision
+
+          zones = repo_zones
+          git_diff = git_provider.git_diff(current_revision, deployed_revision)
 
           begin
-            nsd_control_reload_configs
+            validate_updated_zones(zones, git_diff)
 
           rescue
+            Chef::Log.info("Zone validation failed. Resetting to #{current_revision}")
             git_repo.revision(current_revision)
-            git_provider.git_reset
 
-            nsd_config.variables nsd_config_variables
-            nsd_config.run_action(:create)
-            nsd_control_reload_configs
+            git_provider.git_reset
+            zones = repo_zones
           end
+
+          nsd_config.variables({
+            'server_options' => new_resource.server_options.merge(
+              'zonesdir' => new_resource.release_path
+            ),
+            'config_categories' => {
+              'zone' => zones,
+              'key' => rndc_keys,
+              'remote-control' => new_resource.remote_controls,
+              'pattern' => new_resource.patterns
+            }
+          })
+
+          nsd_config.run_action(:create)
+
+          reload_service
         end
       end
 
 
       private
 
-      def nsd_service(action)
-        Chef::Resource::Service.new('nsd', run_context).tap do |r|
-          r.provider Chef::Provider::Service::Systemd
-        end.run_action(action)
-      end
+      def reload_service
+        nsd_service.run_action(:start)
 
-      def nsd_control_reload_configs
         if nsd_config.updated_by_last_action?
-          nsd_service(:restart)
+          nsd_service.run_action(:restart)
         end
 
         if git_repo.updated_by_last_action?
-          nsd_service(:reload)
+          nsd_service.run_action(:reload)
+        end
+      end
+
+      def nsd_service
+        @nsd_service ||= Chef::Resource::Service.new('nsd', run_context).tap do |r|
+          r.provider Chef::Provider::Service::Systemd
         end
       end
 
@@ -58,20 +80,21 @@ class Chef
         @nsd_config ||= Chef::Resource::Template.new('/etc/nsd/nsd.conf', run_context).tap do |r|
           r.source 'nsd.conf.erb'
           r.cookbook 'nsd'
-          r.variables nsd_config_variables
         end
       end
 
-      def nsd_config_variables
-        {
-          'zones' => repo_zones,
-          'keys' => rndc_keys,
-          'server_options' => new_resource.server_options.merge(
-            'zonesdir' => new_resource.release_path
-          ),
-          'remote_controls' => new_resource.remote_controls,
-          'patterns' => new_resource.patterns
-        }
+      def validate_updated_zones(zones, git_diff)
+        files_updated = {}
+        git_diff.each_line do |e|
+          files_updated[e.chomp] = true
+        end
+
+        zones.each do |z|
+          if files_updated.has_key?(z['zonefile'])
+            Chef::Log.info("Validate updated zonefile #{z['zonefile']}")
+            nsd_checkzone(z['name'], z['zonefile'])
+          end
+        end
       end
 
       def repo_zones
@@ -83,8 +106,7 @@ class Chef
             path = ::File.join(new_resource.release_path, d)
 
             if ::File.directory?(path)
-              options_key = d
-              zone_options = new_resource.zone_options[options_key] || {}
+              zone_options = new_resource.zone_options[d] || {}
 
               Dir.chdir(new_resource.release_path)
               Dir.entries(path).each do |zone|
@@ -100,18 +122,6 @@ class Chef
           end
         end
         zones
-      end
-
-      def git_provider
-        @git_provider ||= git_repo.provider_for_action(:nothing)
-      end
-
-      def git_repo
-        @git_repo ||= Chef::Resource::Git.new(new_resource.name, run_context).tap do |r|
-          r.repository new_resource.git_repo
-          r.branch new_resource.git_branch
-          r.destination new_resource.release_path
-        end
       end
 
       def rndc_keys
@@ -135,6 +145,26 @@ class Chef
         Chef::Resource::Directory.new(::File.dirname(new_resource.release_path), run_context).tap do |r|
           r.recursive true
         end.run_action(:create_if_missing)
+      end
+
+      def git_provider
+        @git_provider ||= git_repo.provider_for_action(:nothing)
+      end
+
+      def git_repo
+        @git_repo ||= Chef::Resource::Git.new(new_resource.name, run_context).tap do |r|
+          r.repository new_resource.git_repo
+          r.branch new_resource.git_branch
+          r.destination new_resource.release_path
+        end
+      end
+
+      def nsd_checkzone(zone, zonefile)
+        shell_out!("#{nsd_checkzone_path} #{zone} #{zonefile}")
+      end
+
+      def nsd_checkzone_path
+        @nsd_checkzone_path ||= which('nsd-checkzone')
       end
     end
   end
