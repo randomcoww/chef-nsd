@@ -1,7 +1,7 @@
 class Chef
   class Provider
     class Nsd < Chef::Provider
-      include RndcKeysHelper
+      include Dbag
       include Chef::Mixin::Which
       include Chef::Mixin::ShellOut
 
@@ -128,7 +128,7 @@ class Chef
       def rndc_keys
         return @rndc_keys unless @rndc_keys.nil?
         @rndc_keys = []
-        keys_resource = RndcKeysHelper.new(
+        keys_resource = Dbag::RndcKey.new(
           new_resource.rndc_keys_data_bag,
           new_resource.rndc_keys_data_bag_item,
         )

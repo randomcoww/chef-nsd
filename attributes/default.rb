@@ -7,7 +7,7 @@ node.default['nsd']['instances']['test'] = {
 
   'rndc_keys_data_bag' => 'deploy_config',
   'rndc_keys_data_bag_item' => 'rndc_keys',
-  'rndc_key_names' => ['rndc-key'],
+  'rndc_key_names' => ['rndc-key-test'],
 
   'server_options' => {
     "do-ip4" => "yes",
