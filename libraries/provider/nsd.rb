@@ -22,18 +22,17 @@ class Chef
 
           git_repo.run_action(:sync)
           deployed_revision = git_provider.find_current_revision
-
-          zones = repo_zones
           git_diff = git_provider.git_diff(current_revision, deployed_revision)
 
           begin
-            validate_updated_zones(zones, git_diff)
+            zones = repo_zones(git_diff)
 
           rescue
             Chef::Log.info("Zone validation failed. Resetting to #{current_revision}")
-            git_repo.revision(current_revision)
 
+            git_repo.revision(current_revision)
             git_provider.git_reset
+
             zones = repo_zones
           end
 
@@ -83,21 +82,15 @@ class Chef
         end
       end
 
-      def validate_updated_zones(zones, git_diff)
+      def repo_zones(git_diff=nil)
+        ## check which zones updated for validation
         files_updated = {}
-        git_diff.each_line do |e|
-          files_updated[e.chomp] = true
-        end
-
-        zones.each do |z|
-          if files_updated.has_key?(z['zonefile'])
-            Chef::Log.info("Validate updated zonefile #{z['zonefile']}")
-            nsd_checkzone(z['name'], z['zonefile'])
+        if !git_diff.nil?
+          git_diff.each_line do |e|
+            files_updated[e.chomp] = true
           end
         end
-      end
 
-      def repo_zones
         zones = []
 
         if ::File.directory?(new_resource.release_path)
@@ -112,9 +105,17 @@ class Chef
               Dir.entries(path).each do |zone|
 
                 if ::File.extname(zone) == '.zone'
+                  name = ::File.basename(zone, '.zone')
+                  zonefile = ::File.join(d, zone)
+
+                  if files_updated.has_key?(zonefile)
+                    Chef::Log.info("Validate updated zonefile #{zonefile}")
+                    nsd_checkzone(name, zonefile)
+                  end
+
                   zones << {
-                    'name' => ::File.basename(zone, '.zone'),
-                    'zonefile' => ::File.join(d, zone)
+                    'name' => name,
+                    'zonefile' => zonefile
                   }.merge(zone_options)
                 end
               end
