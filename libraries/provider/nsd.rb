@@ -128,14 +128,14 @@ class Chef
       def rndc_keys
         return @rndc_keys unless @rndc_keys.nil?
         @rndc_keys = []
-        keys_resource = Dbag::RndcKey.new(
+        keys_resource = Dbag::Keystore.new(
           new_resource.rndc_keys_data_bag,
           new_resource.rndc_keys_data_bag_item,
         )
         new_resource.rndc_key_names.each do |k|
           @rndc_keys << {
             'name' => k,
-            'secret' => keys_resource.get_or_create(k)
+            'secret' => keys_resource.get_or_create(k, SecureRandom.base64)
           }
         end
 
