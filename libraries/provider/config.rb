@@ -32,7 +32,7 @@ class ChefNsd
       private
 
       def nsd_config
-        @nsd_config ||= Chef::Resource::File.new('nsd.conf', run_context).tap do |r|
+        @nsd_config ||= Chef::Resource::File.new(new_resource.path, run_context).tap do |r|
           r.path new_resource.path
           r.content new_resource.content
         end
