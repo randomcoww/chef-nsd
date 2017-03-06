@@ -9,17 +9,23 @@ class ChefNsd
 
       def load_current_resource
         @current_resource = ChefNsd::Resource::GitZones.new(new_resource.name)
+
+        current_resource.exists(::File.directory?(new_resource.release_path))
+        if current_resource.exists
+          current_resource.revision(git_provider.find_current_revision)
+        else
+          current_resource.revision(nil)
+        end
+
         current_resource
       end
 
       def action_deploy
         create_release_path
-        current_revision = git_provider.find_current_revision
-
         git_repo.run_action(:sync)
 
         deployed_revision = git_provider.find_current_revision
-        git_diff = git_provider.git_diff(current_revision, deployed_revision)
+        git_diff = git_provider.git_diff(current_resource.revision, deployed_revision)
 
         begin
           zones = repo_zones(git_diff)
@@ -29,11 +35,18 @@ class ChefNsd
           end
 
         rescue
-          Chef::Log.info("Zone validation failed. Resetting to #{current_revision}")
+          Chef::Log.error("Zone validation failed")
 
-          new_resource.updated_by_last_action(false)
-          git_repo.revision(current_revision)
-          git_provider.git_reset
+          if !current_resource.revision.nil?
+            Chef::Log.info("Resetting to #{current_resource.revision}")
+
+            new_resource.updated_by_last_action(false)
+            git_repo.revision(current_resource.revision)
+            git_provider.git_reset
+          else
+
+            Chef::Log.warn("Could not find previous revision to restore")
+          end
         end
       end
 

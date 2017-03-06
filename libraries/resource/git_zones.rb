@@ -6,6 +6,9 @@ class ChefNsd
       default_action :deploy
       allowed_actions :deploy, :rollback
 
+      property :exists, [TrueClass, FalseClass]
+      property :revision, String
+
       property :release_path, String
       property :git_repo, String
       property :git_branch, String
