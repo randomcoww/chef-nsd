@@ -11,7 +11,7 @@ class ChefNsd
       property :git_branch, String
       property :zone_options, Hash
 
-      property :path, Hash
+      property :path, String
     end
   end
 end
