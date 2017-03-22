@@ -4,7 +4,7 @@ class ChefNsd
       resource_name :nsd_git_zones
 
       default_action :deploy
-      allowed_actions :deploy, :rollback
+      allowed_actions :deploy
 
       property :exists, [TrueClass, FalseClass]
       property :revision, String
