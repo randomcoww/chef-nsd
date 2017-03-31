@@ -1,7 +1,7 @@
 class ChefNsd
   class Resource
     class Config < Chef::Resource
-      include ConfigGenerator
+      include NsdConfigGenerator
 
       resource_name :nsd_config
 

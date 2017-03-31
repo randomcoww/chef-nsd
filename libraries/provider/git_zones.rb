@@ -3,7 +3,7 @@ class ChefNsd
     class GitZones < Chef::Provider
       include Chef::Mixin::Which
       include Chef::Mixin::ShellOut
-      include ConfigGenerator
+      include NsdConfigGenerator
 
       provides :nsd_git_zones, os: "linux"
 
