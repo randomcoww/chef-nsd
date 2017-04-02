@@ -32,7 +32,7 @@ class ChefNsd
           converge_by("Create nsd zone config: #{new_resource}") do
             nsd_zone_config.content generate_config('zone' => zones)
             nsd_zone_config.run_action(:create)
-          end unless git_diff.empty?
+          end if !git_diff.empty? || current_resource.revision.nil?
 
         rescue
           Chef::Log.error("Zone validation failed")
