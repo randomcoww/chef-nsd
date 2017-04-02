@@ -28,11 +28,13 @@ class ChefNsd
         git_diff = git_provider.git_diff(current_resource.revision, deployed_revision)
 
         begin
+          ## get and validate zones. raise if validation fails
           zones = repo_zones(git_diff)
+
           converge_by("Create nsd zone config: #{new_resource}") do
             nsd_zone_config.content generate_config('zone' => zones)
             nsd_zone_config.run_action(:create)
-          end if !git_diff.empty? || current_resource.revision.nil?
+          end if current_resource.revision.nil? || !git_diff.empty?
 
         rescue
           Chef::Log.error("Zone validation failed")
