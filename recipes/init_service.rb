@@ -1,3 +1,7 @@
+package 'procps' do
+  action :upgrade
+end
+
 service 'nsd' do
   # provider Chef::Provider::Service::Init
   start_command "/etc/init.d/nsd start"
