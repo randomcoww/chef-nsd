@@ -1,0 +1,6 @@
+<%= @domain %>  <%= @ttl %> SOA <%= @name_server %>  <%= @email_addr %>  <%= @sn %> <%= @ref %> <%= @ret %> <%= @ex %>  <%= @nx %>
+<%= @domain %>  <%= @ttl %>  NS <%= @name_server %>
+
+<% @hosts.each do |hostname, address| %>
+<%= hostname %> <%= @ttl %> A <%= address %>
+<% end %>
