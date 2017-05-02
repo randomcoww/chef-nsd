@@ -2,5 +2,5 @@
 <%= @domain %>.  <%= @ttl %>  NS <%= @name_server %>.
 
 <% @hosts.each do |hostname, address| %>
-<%= hostname %>. <%= @ttl %> A <%= address %>
+<%= hostname %> <%= @ttl %> A <%= address %>
 <% end %>
