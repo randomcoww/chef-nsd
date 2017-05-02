@@ -18,6 +18,7 @@ class ChefNsd
       property :ex, Integer, default: 604800
       property :nx, Integer, default: 86400
 
+      property :hosts, Hash
       property :zone_options, Hash
 
       property :zone_path, String
@@ -36,7 +37,7 @@ class ChefNsd
           template zonefile_path do
             source 'zonefile.erb'
             variables ({
-              owner_name: new_resource,owner_name,
+              owner_name: new_resource.owner_name,
               ttl: new_resource.ttl,
               name_server: new_resource.name_server,
               email_addr: new_resource.email_addr,
