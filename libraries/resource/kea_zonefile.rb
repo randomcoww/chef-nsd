@@ -26,35 +26,35 @@ class ChefNsd
       property :username, String
       property :password, String
       property :timeout, Integer, default: 120
-      property :hosts, Hash, default: lazy { get_lease_hosts }
 
+      property :hosts, Hash, default: lazy { get_lease_hosts }
       property :zone_options, Hash, default: {}
       property :path, String, default: lazy { ::File.join(Chef::Config[:file_cache_path], 'nsd', domain) }
-    end
 
-    def provider
-      ChefNsd::Provider::Zonefile
-    end
-
-
-    private
-
-    def get_lease_hosts
-      result = {}
-
-      client = MysqlConfig::Client.new(timeout,
-        username: username,
-        database: database,
-        host: host,
-        password: password
-      )
-
-      query = %Q{SELECT hostname,address FROM lease4 WHERE client_id IS NOT NULL AND hostname!="" AND state=0'}
-      client.query(query).each do |e|
-        result[e['hostname']] = e['address']
+      def provider
+        ChefNsd::Provider::Zonefile
       end
 
-      return result
+
+      private
+
+      def get_lease_hosts
+        result = {}
+
+        client = MysqlConfig::Client.new(timeout,
+          username: username,
+          database: database,
+          host: host,
+          password: password
+        )
+
+        query = %Q{SELECT hostname,address FROM lease4 WHERE client_id IS NOT NULL AND hostname!="" AND state=0}
+        client.query(query).each do |e|
+          result[e['hostname'].split('.').first] = IPAddr.new(e['address'], Socket::AF_INET).to_s
+        end
+
+        return result
+      end
     end
   end
 end
