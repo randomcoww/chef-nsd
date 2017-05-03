@@ -48,7 +48,7 @@ class ChefNsd
           password: password
         )
 
-        query = %Q{SELECT hostname,address FROM lease4 WHERE client_id IS NOT NULL AND hostname!="" AND state=0}
+        query = %Q{SELECT hostname,address FROM lease4 WHERE client_id IS NOT NULL AND hostname!="" AND state=0 ORDER BY hostname}
         client.query(query).each do |e|
           result[e['hostname'].split('.').first] = IPAddr.new(e['address'], Socket::AF_INET).to_s
         end
