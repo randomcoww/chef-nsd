@@ -6,12 +6,10 @@ class ChefNsd
       def load_current_resource
         @current_resource = ChefNsd::Resource::Config.new(new_resource.name)
 
-        current_resource.exists(::File.exist?(new_resource.path))
-
-        if current_resource.exists
+        if ::File.exist?(new_resource.path)
           current_resource.content(::File.read(new_resource.path).chomp)
         else
-          current_resource.content('')
+          current_resource.content(nil)
         end
 
         current_resource
@@ -20,13 +18,13 @@ class ChefNsd
       def action_create
         converge_by("Create nsd config: #{new_resource}") do
           nsd_config.run_action(:create)
-        end if !current_resource.exists || current_resource.content != new_resource.content
+        end if current_resource.content.nil? || current_resource.content != new_resource.content
       end
 
       def action_delete
         converge_by("Delete nsd config: #{new_resource}") do
           nsd_config.run_action(:delete)
-        end if current_resource.exists
+        end if !current_resource.content.nil?
       end
 
       private
