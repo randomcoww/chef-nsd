@@ -3,7 +3,7 @@ class ChefNsd
     class GitZones < Chef::Provider
       include Chef::Mixin::Which
       include Chef::Mixin::ShellOut
-      include NsdConfigGenerator
+      include NsdResourceHelper
 
       provides :nsd_git_zones, os: "linux"
 
@@ -32,7 +32,7 @@ class ChefNsd
           zones = repo_zones(git_diff)
 
           converge_by("Create nsd zone config: #{new_resource}") do
-            nsd_zone_config.content generate_config('zone' => zones)
+            nsd_zone_config.content ConfigGenerator.generate_from_hash('zone' => zones)
             nsd_zone_config.run_action(:create)
           end if current_resource.revision.nil? || !git_diff.empty?
 

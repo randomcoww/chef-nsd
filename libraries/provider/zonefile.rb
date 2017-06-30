@@ -1,7 +1,7 @@
 class ChefNsd
   class Provider
     class Zonefile < Chef::Provider
-      include NsdConfigGenerator
+      include NsdResourceHelper
 
       provides :nsd_zonefile, os: "linux"
 

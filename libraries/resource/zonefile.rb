@@ -1,7 +1,7 @@
 class ChefNsd
   class Resource
     class Zonefile < Chef::Resource
-      include NsdConfigGenerator
+      include NsdResourceHelper
 
       resource_name :nsd_zonefile
 

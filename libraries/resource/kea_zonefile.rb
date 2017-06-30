@@ -3,8 +3,8 @@ require 'ipaddr'
 class ChefNsd
   class Resource
     class KeaZonefile < Chef::Resource
-      include NsdConfigGenerator
-      include MysqlConfig
+      include NsdResourceHelper
+      include MysqlHelper
 
       resource_name :nsd_kea_zonefile
 
@@ -41,7 +41,7 @@ class ChefNsd
       def get_lease_hosts
         result = {}
 
-        client = MysqlConfig::Client.new(timeout,
+        client = MysqlHelper::Client.new(timeout,
           username: username,
           database: database,
           host: host,
